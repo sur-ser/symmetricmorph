@@ -1,0 +1,6 @@
+examples/
+test/
+src/
+vite.config.ts
+*.log
+*.DS_Store

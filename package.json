@@ -1,13 +1,13 @@
 {
   "name": "symmetricmorph",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "High-performance symmetric stream cipher with dynamic masking, cascading feedback, built-in MAC, and chunked encryption support. Lightweight and dependency-free.",
-  "main": "./dist/symmetricmorph.cjs.js",
-  "module": "./dist/symmetricmorph.es.js",
-  "types": "./dist/symmetricmorph.d.ts",
+  "main": "./dist/node/SymmetricMorph.js",
+  "module": "./dist/browser/symmetricmorph.es.js",
+  "types": "./dist/node/SymmetricMorph.d.ts",
   "exports": {
-    "import": "./dist/symmetricmorph.es.js",
-    "require": "./dist/symmetricmorph.cjs.js"
+    "import": "./dist/browser/symmetricmorph.es.js",
+    "require": "./dist/node/SymmetricMorph.js"
   },
   "files": [
     "dist",
@@ -16,11 +16,11 @@
     "TESTING.md"
   ],
   "scripts": {
-    "build": "tsc",
+    "build:node": "tsc",
     "build:browser": "vite build",
-    "build:all": "npm run build && npm run build:browser",
+    "build": "npm run build:node && npm run build:browser",
     "test": "vitest run",
-    "prepare": "npm run build:all"
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",
