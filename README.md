@@ -2,6 +2,8 @@
 ![npm](https://img.shields.io/npm/v/symmetricmorph)
 ![GitHub](https://img.shields.io/github/license/sur-ser/symmetricmorph)
 ![GitHub issues](https://img.shields.io/github/issues/sur-ser/symmetricmorph)
+[![Symmorph CLI](https://img.shields.io/badge/CLI-Available-green)](https://github.com/sur-ser/symmorph-cli)
+
 
 Unique symmetric stream cipher with dynamic masking, cascading feedback, chunked streaming support, and internal MAC.
 
@@ -285,6 +287,31 @@ console.log(String.fromCharCode(...decrypted)); // Random key encryption!
 | `cipher.encryptChunks(chunks: Uint8Array[])` | Encrypts multiple data chunks. |
 | `cipher.decryptChunks(chunks: Uint8Array[])` | Decrypts multiple data chunks. |
 
+---
+
+## 📦 Also Available: SymmetricMorph CLI
+
+You can encrypt and decrypt files easily from the command line using the official **[SymmetricMorph CLI](https://www.npmjs.com/package/symmorph-cli)**.
+✅ Simple usage:
+✅ Supports encryption and decryption of any files
+✅ Automatically handles salt and password securely
+✅ Lightweight and fast
+
+Install globally:
+
+```bash
+npm install -g symmorph-cli
+```
+
+Usage example:
+```bash
+# Encrypt a file
+symmorph encrypt --input myfile.txt --output encrypted.bin --password "MyStrongPassword"
+
+# Decrypt a file
+symmorph decrypt --input encrypted.bin --output decrypted.txt --password "MyStrongPassword"
+```
+➡️ Learn more: [https://github.com/sur-ser/symmorph-cli](https://github.com/sur-ser/symmorph-cli)
 
 ---
 
