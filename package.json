@@ -1,6 +1,6 @@
 {
   "name": "symmetricmorph",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "High-performance symmetric stream cipher with dynamic masking, cascading feedback, built-in MAC, and chunked encryption support. Lightweight and dependency-free.",
   "main": "./dist/node/SymmetricMorph.js",
   "module": "./dist/browser/symmetricmorph.es.js",
