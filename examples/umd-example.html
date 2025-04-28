@@ -3,16 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>SymmetricMorph UMD Test</title>
-    <script src="../dist/symmetricmorph.umd.js"></script>
+    <script src="../../dist/browser/symmetricmorph.umd.js"></script>
     <script>
-      const cipher = SymmetricMorph.fromPassword('MyStrongPassword');
-      const plain = Array.from('Hello Browser!').map(c => c.charCodeAt(0));
+      // Step 1: Encrypt
+      const cipherEnc = SymmetricMorph.fromPassword('MyStrongPassword');
+      const salt = cipherEnc.getSalt();
+      const plain = new Uint8Array(Array.from('Hello Browser!').map(c => c.charCodeAt(0)));
+      const encrypted = cipherEnc.encrypt(plain);
 
-      const encrypted = cipher.encrypt(plain);
-      const decrypted = cipher.decrypt(encrypted);
+      // Step 2: Decrypt using the saved salt
+      const cipherDec = SymmetricMorph.fromPasswordWithSalt('MyStrongPassword', salt);
+      const decrypted = cipherDec.decrypt(encrypted);
 
       console.log(String.fromCharCode(...decrypted)); // Hello Browser!
     </script>
+
 
 </head>
 <body>

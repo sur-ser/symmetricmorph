@@ -55,20 +55,43 @@ yarn add symmetricmorph
 
 ---
 
+## 🌐 CDN Usage (Optional)
+You can also load SymmetricMorph directly from a CDN without installing:
+
+**Using** unpkg:
+```html
+<script src="https://unpkg.com/symmetricmorph/dist/browser/symmetricmorph.umd.js"></script>
+```
+Or **using** jsDelivr:
+```html
+<script src="https://cdn.jsdelivr.net/npm/symmetricmorph/dist/browser/symmetricmorph.umd.js"></script>
+```
+Then use it via global SymmetricMorph object in your scripts.
+
+
+---
+
 ## ⚡ Quick Start
+
+"**Important**: Always save the salt after encryption. It's required for correct decryption."
 
 ### Node.js (CommonJS)
 
 ```javascript
 const SymmetricMorph = require('symmetricmorph').default;
 
-const cipher = SymmetricMorph.fromPassword('MyStrongPassword');
-const plain = Array.from('Hello Node!').map(c => c.charCodeAt(0));
+// Step 1: Encrypt
+const cipherEnc = SymmetricMorph.fromPassword('MyStrongPassword');
+const salt = cipherEnc.getSalt();
+const plain = new Uint8Array(Array.from('Hello Node!').map(c => c.charCodeAt(0)));
+const encrypted = cipherEnc.encrypt(plain);
 
-const encrypted = cipher.encrypt(plain);
-const decrypted = cipher.decrypt(encrypted);
+// Step 2: Decrypt using the saved salt
+const cipherDec = SymmetricMorph.fromPasswordWithSalt('MyStrongPassword', salt);
+const decrypted = cipherDec.decrypt(encrypted);
 
 console.log(String.fromCharCode(...decrypted)); // Hello Node!
+
 ```
 
 ### Node.js (ESM)
@@ -76,13 +99,18 @@ console.log(String.fromCharCode(...decrypted)); // Hello Node!
 ```typescript
 import SymmetricMorph from 'symmetricmorph';
 
-const cipher = SymmetricMorph.fromPassword('MyStrongPassword');
-const plain = Array.from('Hello Node ESM!').map(c => c.charCodeAt(0));
+// Step 1: Encrypt
+const cipherEnc = SymmetricMorph.fromPassword('MyStrongPassword');
+const salt = cipherEnc.getSalt();
+const plain = new Uint8Array(Array.from('Hello Node ESM!').map(c => c.charCodeAt(0)));
+const encrypted = cipherEnc.encrypt(plain);
 
-const encrypted = cipher.encrypt(plain);
-const decrypted = cipher.decrypt(encrypted);
+// Step 2: Decrypt using the saved salt
+const cipherDec = SymmetricMorph.fromPasswordWithSalt('MyStrongPassword', salt);
+const decrypted = cipherDec.decrypt(encrypted);
 
 console.log(String.fromCharCode(...decrypted)); // Hello Node ESM!
+
 ```
 
 ---
@@ -94,13 +122,17 @@ console.log(String.fromCharCode(...decrypted)); // Hello Node ESM!
 ```html
 <script src="symmetricmorph.umd.js"></script>
 <script>
-  const cipher = SymmetricMorph.fromPassword('BrowserPassword');
-  const plain = Array.from('Hello Browser!').map(c => c.charCodeAt(0));
+    // Step 1: Encrypt
+    const cipherEnc = SymmetricMorph.fromPassword('MyStrongPassword');
+    const salt = cipherEnc.getSalt();
+    const plain = new Uint8Array(Array.from('Hello Browser!').map(c => c.charCodeAt(0)));
+    const encrypted = cipherEnc.encrypt(plain);
 
-  const encrypted = cipher.encrypt(plain);
-  const decrypted = cipher.decrypt(encrypted);
+    // Step 2: Decrypt using the saved salt
+    const cipherDec = SymmetricMorph.fromPasswordWithSalt('MyStrongPassword', salt);
+    const decrypted = cipherDec.decrypt(encrypted);
 
-  console.log(String.fromCharCode(...decrypted)); // Hello Browser!
+    console.log(String.fromCharCode(...decrypted)); // Hello Browser!
 </script>
 ```
 
@@ -108,15 +140,19 @@ console.log(String.fromCharCode(...decrypted)); // Hello Node ESM!
 
 ```html
 <script type="module">
-  import SymmetricMorph from './dist/symmetricmorph.es.js';
+  import SymmetricMorph from './symmetricmorph.es.js';
 
-  const cipher = SymmetricMorph.fromPassword('BrowserESM');
-  const plain = Array.from('Hello ESM!').map(c => c.charCodeAt(0));
+  // Step 1: Encrypt
+  const cipherEnc = SymmetricMorph.fromPassword('Secret123');
+  const salt = cipherEnc.getSalt();
+  const plain = new Uint8Array(Array.from('Hello Browser!').map(c => c.charCodeAt(0)));
+  const encrypted = cipherEnc.encrypt(plain);
 
-  const encrypted = cipher.encrypt(plain);
-  const decrypted = cipher.decrypt(encrypted);
+  // Step 2: Decrypt using the saved salt
+  const cipherDec = SymmetricMorph.fromPasswordWithSalt('Secret123', salt);
+  const decrypted = cipherDec.decrypt(encrypted);
 
-  console.log(String.fromCharCode(...decrypted));
+  console.log(String.fromCharCode(...decrypted)); // Hello Browser!
 </script>
 ```
 
@@ -128,30 +164,70 @@ Encrypt large files in a Web Worker without blocking the main UI:
 
 ```html
 <script>
-  const worker = new Worker('./worker/symmetricmorph-worker.js');
+    const worker = new Worker('./symmetricmorph-worker.js');
 
-  worker.postMessage({ type: 'init', password: 'WorkerPassword123' });
+    let savedSalt = null;
+    let encryptedData = null;
 
-  worker.onmessage = (event) => {
-    const { type, encrypted, decrypted } = event.data;
+    worker.postMessage({ type: 'init', password: 'StrongPassword123' });
 
-    if (type === 'ready') {
-      const plainText = 'Encrypt large data easily!';
-      const plainBytes = Array.from(plainText).map(c => c.charCodeAt(0));
+    worker.onmessage = (event) => {
+        const { type, encrypted, decrypted, salt } = event.data;
 
-      worker.postMessage({ type: 'encrypt', data: plainBytes });
-    }
+        if (type === 'ready') {
+            console.log('Worker ready! Encrypting now...');
+            const plainText = 'This is a big secret message!';
+            const plainBytes = new Uint8Array(Array.from(plainText).map(c => c.charCodeAt(0)));
 
-    if (type === 'encrypted') {
-      console.log('Encrypted:', encrypted);
-      worker.postMessage({ type: 'decrypt', data: encrypted });
-    }
+            worker.postMessage({ type: 'encrypt', data: plainBytes });
+        }
 
-    if (type === 'decrypted') {
-      console.log('Decrypted:', String.fromCharCode(...decrypted));
-    }
-  };
+        if (type === 'encrypted') {
+            console.log('Encrypted data:', encrypted);
+            encryptedData = encrypted;
+            savedSalt = event.data.salt;
+
+            worker.postMessage({ type: 'decrypt', data: encryptedData, salt: savedSalt });
+        }
+
+        if (type === 'decrypted') {
+            console.log('Decrypted data:', String.fromCharCode(...decrypted));
+        }
+
+        if (type === 'error') {
+            console.error('Worker error:', event.data.message);
+        }
+    };
 </script>
+```
+**and in `symmetricmorph-worker.js`:**
+
+```javascript
+importScripts('../../../dist/browser/symmetricmorph.umd.js');
+
+let cipher = null;
+let currentPassword = null;
+let currentSalt = null;
+
+self.addEventListener('message', (event) => {
+  const { type, password, data, salt } = event.data;
+
+  if (type === 'init') {
+    currentPassword = password;
+    cipher = SymmetricMorph.fromPassword(currentPassword);
+    currentSalt = cipher.getSalt();
+    postMessage({ type: 'ready' });
+  } else if (type === 'encrypt' && cipher) {
+    const encrypted = cipher.encrypt(data);
+    postMessage({ type: 'encrypted', encrypted, salt: currentSalt });
+  } else if (type === 'decrypt' && data && salt) {
+    const decryptCipher = SymmetricMorph.fromPasswordWithSalt(currentPassword, salt);
+    const decrypted = decryptCipher.decrypt(data);
+    postMessage({ type: 'decrypted', decrypted });
+  } else {
+    postMessage({ type: 'error', message: 'Invalid operation' });
+  }
+});
 ```
 
 ---
@@ -199,13 +275,16 @@ console.log(String.fromCharCode(...decrypted)); // Random key encryption!
 
 | Method | Description |
 |:---|:---|
-| `SymmetricMorph.fromPassword(password: string, iterations?: number, keyLength?: number)` | Creates a cipher instance from a password. |
-| `SymmetricMorph.fromKey(key: number[])` | Creates a cipher instance from a raw key. |
-| `SymmetricMorph.generateKey(length?: number)` | Generates a secure random key. |
-| `cipher.encrypt(plainBytes: number[])` | Encrypts an array of bytes. |
-| `cipher.decrypt(encryptedBytes: number[])` | Decrypts an array of bytes and verifies integrity. |
-| `cipher.encryptChunks(chunks: number[][])` | Encrypts multiple data chunks. |
-| `cipher.decryptChunks(chunks: number[][])` | Decrypts multiple data chunks. |
+| `SymmetricMorph.fromPassword(password: string, iterations?: number, keyLength?: number)` | Creates a cipher instance from a password and generates a random salt. |
+| `SymmetricMorph.fromPasswordWithSalt(password: string, salt: Uint8Array \| number[], iterations?: number, keyLength?: number)` | Creates a cipher instance from a password and a provided salt. |
+| `SymmetricMorph.fromKey(key: Uint8Array)` | Creates a cipher instance from a raw encryption key. |
+| `SymmetricMorph.generateKey(length?: number)` | Generates a secure random encryption key. |
+| `cipher.getSalt()` | Returns the salt used during password-based key derivation (or `undefined` if using a raw key). |
+| `cipher.encrypt(plainBytes: Uint8Array)` | Encrypts an array of bytes. |
+| `cipher.decrypt(encryptedBytes: Uint8Array)` | Decrypts an array of bytes and verifies integrity. |
+| `cipher.encryptChunks(chunks: Uint8Array[])` | Encrypts multiple data chunks. |
+| `cipher.decryptChunks(chunks: Uint8Array[])` | Decrypts multiple data chunks. |
+
 
 ---
 

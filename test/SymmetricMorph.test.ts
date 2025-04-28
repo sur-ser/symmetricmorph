@@ -1,9 +1,9 @@
-import { describe, it, expect, test } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import SymmetricMorph from '../src/SymmetricMorph';
 
 describe('SymmetricMorph', () => {
-    const toBytes = (str: string) => Array.from(str).map(c => c.charCodeAt(0));
-    const toString = (bytes: number[]) => String.fromCharCode(...bytes);
+    const toBytes = (str: string) => new Uint8Array(Array.from(str).map(c => c.charCodeAt(0)));
+    const toString = (bytes: Uint8Array) => String.fromCharCode(...bytes);
 
     it('should encrypt and decrypt simple string correctly', () => {
         const cipher = SymmetricMorph.fromPassword('StrongPassword123');
@@ -29,7 +29,7 @@ describe('SymmetricMorph', () => {
 
     it('should encrypt and decrypt large random data correctly', () => {
         const cipher = SymmetricMorph.fromPassword('LargeDataPassword');
-        const plainBytes = Array.from({ length: 100_000 }, () => Math.floor(Math.random() * 256));
+        const plainBytes = new Uint8Array(Array.from({ length: 100_000 }, () => Math.floor(Math.random() * 256)));
 
         const encrypted = cipher.encrypt(plainBytes);
         const decrypted = cipher.decrypt(encrypted);
@@ -64,17 +64,17 @@ describe('SymmetricMorph', () => {
 
     it('should encrypt and decrypt empty data correctly', () => {
         const cipher = SymmetricMorph.fromPassword('EmptyPassword');
-        const plainBytes: number[] = [];
+        const plainBytes = new Uint8Array([]);
 
         const encrypted = cipher.encrypt(plainBytes);
         const decrypted = cipher.decrypt(encrypted);
 
-        expect(decrypted).toEqual([]);
+        expect(decrypted).toEqual(new Uint8Array());
     });
 
     it('should handle very small data (1 byte)', () => {
         const cipher = SymmetricMorph.fromPassword('SmallData');
-        const plainBytes = [42]; // Single byte
+        const plainBytes = new Uint8Array([42]); // Single byte
 
         const encrypted = cipher.encrypt(plainBytes);
         const decrypted = cipher.decrypt(encrypted);
@@ -97,7 +97,8 @@ describe('SymmetricMorph', () => {
 });
 
 describe('SymmetricMorph Performance', () => {
-    const generateRandomBytes = (size: number) => Array.from({ length: size }, () => Math.floor(Math.random() * 256));
+    const generateRandomBytes = (size: number) =>
+        new Uint8Array(Array.from({ length: size }, () => Math.floor(Math.random() * 256)));
 
     it('should measure encryption and decryption speed', () => {
         const cipher = SymmetricMorph.fromPassword('PerformanceTestPassword');
@@ -109,7 +110,7 @@ describe('SymmetricMorph Performance', () => {
         const encryptStart = performance.now();
         const encrypted = cipher.encrypt(plainBytes);
         const encryptEnd = performance.now();
-        const encryptTime = (encryptEnd - encryptStart) / 1000; // seconds
+        const encryptTime = (encryptEnd - encryptStart) / 1000;
 
         console.log(`Encryption time: ${encryptTime.toFixed(3)} seconds`);
         console.log(`Encryption speed: ${(dataSizeBytes / 1024 / 1024 / encryptTime).toFixed(2)} MB/s`);
@@ -119,13 +120,11 @@ describe('SymmetricMorph Performance', () => {
         const decryptStart = performance.now();
         const decrypted = cipher.decrypt(encrypted);
         const decryptEnd = performance.now();
-        const decryptTime = (decryptEnd - decryptStart) / 1000; // seconds
+        const decryptTime = (decryptEnd - decryptStart) / 1000;
 
         console.log(`Decryption time: ${decryptTime.toFixed(3)} seconds`);
         console.log(`Decryption speed: ${(encrypted.length / 1024 / 1024 / decryptTime).toFixed(2)} MB/s`);
 
-        if (JSON.stringify(plainBytes) !== JSON.stringify(decrypted)) {
-            throw new Error('Decrypted data does not match original!');
-        }
+        expect(decrypted).toEqual(plainBytes);
     });
 });

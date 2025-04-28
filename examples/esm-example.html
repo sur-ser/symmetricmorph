@@ -4,14 +4,21 @@
     <meta charset="UTF-8">
     <title>SymmetricMorph ESM Test</title>
     <script type="module">
-      import SymmetricMorph from '../dist/symmetricmorph.es.js';
+      import SymmetricMorph from '../../dist/browser/symmetricmorph.es.js';
 
-      const cipher = SymmetricMorph.fromPassword('Secret123');
-      const plain = Array.from('Hi!').map(c => c.charCodeAt(0));
-      const encrypted = cipher.encrypt(plain);
-      const decrypted = cipher.decrypt(encrypted);
-      console.log(String.fromCharCode(...decrypted));
+      // Step 1: Encrypt
+      const cipherEnc = SymmetricMorph.fromPassword('Secret123');
+      const salt = cipherEnc.getSalt();
+      const plain = new Uint8Array(Array.from('Hello Browser!').map(c => c.charCodeAt(0)));
+      const encrypted = cipherEnc.encrypt(plain);
+
+      // Step 2: Decrypt using the saved salt
+      const cipherDec = SymmetricMorph.fromPasswordWithSalt('Secret123', salt);
+      const decrypted = cipherDec.decrypt(encrypted);
+
+      console.log(String.fromCharCode(...decrypted)); // Hello Browser!
     </script>
+
 
 </head>
 <body>

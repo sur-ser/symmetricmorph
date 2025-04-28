@@ -6,7 +6,17 @@
  * Developed without the use of third-party libraries.
  */
 export default class SymmetricMorph {
-    private constructor(private readonly key: number[]) {}
+    private constructor(
+        private readonly key: Uint8Array,
+        private readonly salt?: Uint8Array
+    ) {}
+
+    /**
+     * @returns Returns the salt used for key derivation, if available.
+     */
+    public getSalt(): Uint8Array | undefined {
+        return this.salt;
+    }
 
     /**
      * Creates a `SymmetricMorph` instance from a password.
@@ -18,7 +28,21 @@ export default class SymmetricMorph {
     static fromPassword(password: string, iterations = 20000, keyLength = 64): SymmetricMorph {
         const salt = this.generateSalt(24);
         const key = this.deriveKey(this.strToBytes(password), salt, iterations, keyLength);
-        return new SymmetricMorph(key);
+        return new SymmetricMorph(key, salt);
+    }
+
+    /**
+     * Creates a `SymmetricMorph` instance from a password and salt.
+     * @param password - The password to derive the encryption key.
+     * @param salt - The salt as an array of bytes or a number array.
+     * @param iterations - Number of iterations for key derivation (default: 20000).
+     * @param keyLength - Length of the derived key in bytes (default: 64).
+     * @returns A new `SymmetricMorph` instance.
+     */
+    static fromPasswordWithSalt(password: string, salt: Uint8Array | number[], iterations = 20000, keyLength = 64): SymmetricMorph {
+        const saltArray = salt instanceof Uint8Array ? salt : Uint8Array.from(salt);
+        const key = this.deriveKey(this.strToBytes(password), saltArray, iterations, keyLength);
+        return new SymmetricMorph(key, saltArray);
     }
 
     /**
@@ -26,8 +50,8 @@ export default class SymmetricMorph {
      * @param key - The encryption key as an array of bytes.
      * @returns A new `SymmetricMorph` instance.
      */
-    static fromKey(key: number[]): SymmetricMorph {
-        return new SymmetricMorph([...key]);
+    static fromKey(key: Uint8Array): SymmetricMorph {
+        return new SymmetricMorph(key);
     }
 
     /**
@@ -35,9 +59,9 @@ export default class SymmetricMorph {
      * @param length - Length of the key in bytes (default: 64).
      * @returns A randomly generated key as an array of bytes.
      */
-    static generateKey(length = 64): number[] {
+    static generateKey(length = 64): Uint8Array {
         const prng = this.createPrng([Date.now() & 0xFF]);
-        return Array.from({ length }, () => prng());
+        return Uint8Array.from({ length } as any, (_, i) => prng());
     }
 
     /**
@@ -45,10 +69,10 @@ export default class SymmetricMorph {
      * @param plainBytes - The plaintext data as an array of bytes.
      * @returns The encrypted data as an array of bytes.
      */
-    encrypt(plainBytes: number[]): number[] {
+    encrypt(plainBytes: Uint8Array): Uint8Array {
         const nonce = SymmetricMorph.generateNonce();
         const prng = SymmetricMorph.createPrng([...this.key, ...nonce]);
-        const encrypted: number[] = [];
+        const encrypted = new Uint8Array(plainBytes.length);
         const state = this.initState();
 
         let feedback = 0xA5;
@@ -58,11 +82,10 @@ export default class SymmetricMorph {
         for (let i = 0; i < plainBytes.length; i++) {
             const r = prng();
             const pos = (i + feedback + prev1 + prev2) % state.length;
-
             const mask = (state[pos] ^ feedback ^ prev1 ^ prev2 ^ prev3) & 0xFF;
             const mixed = (plainBytes[i] ^ mask ^ r) & 0xFF;
             const rotated = ((mixed << (i % 5)) | (mixed >> (8 - (i % 5)))) & 0xFF;
-            encrypted.push(rotated);
+            encrypted[i] = rotated;
 
             this.updateState(state, rotated, feedback, r, i, prev1, prev2, prev3);
 
@@ -76,7 +99,7 @@ export default class SymmetricMorph {
 
         const mac = SymmetricMorph.generateMac(macAcc, this.key);
 
-        return [...nonce, ...mac, ...encrypted];
+        return Uint8Array.from([...nonce, ...mac, ...encrypted]);
     }
 
     /**
@@ -85,7 +108,7 @@ export default class SymmetricMorph {
      * @returns The decrypted plaintext data as an array of bytes.
      * @throws Error if MAC verification fails.
      */
-    decrypt(encryptedBytes: number[]): number[] {
+    decrypt(encryptedBytes: Uint8Array): Uint8Array {
         const nonce = encryptedBytes.slice(0, 8);
         const mac = encryptedBytes.slice(8, 8 + 32);
         const cipherData = encryptedBytes.slice(8 + 32);
@@ -97,17 +120,16 @@ export default class SymmetricMorph {
         let prev1 = 0x6C, prev2 = 0x3A, prev3 = 0x91;
         let macAcc = 157;
 
-        const decrypted: number[] = [];
+        const decrypted = new Uint8Array(cipherData.length);
 
         for (let i = 0; i < cipherData.length; i++) {
             const r = prng();
             const pos = (i + feedback + prev1 + prev2) % expectedState.length;
-
             const mask = (expectedState[pos] ^ feedback ^ prev1 ^ prev2 ^ prev3) & 0xFF;
             const rotated = cipherData[i];
             const unrotated = ((rotated >> (i % 5)) | (rotated << (8 - (i % 5)))) & 0xFF;
             const plain = (unrotated ^ mask ^ r) & 0xFF;
-            decrypted.push(plain);
+            decrypted[i] = plain;
 
             this.updateState(expectedState, rotated, feedback, r, i, prev1, prev2, prev3);
 
@@ -133,7 +155,7 @@ export default class SymmetricMorph {
      * @param chunks - An array of plaintext byte arrays.
      * @returns An array of encrypted byte arrays.
      */
-    encryptChunks(chunks: number[][]): number[][] {
+    encryptChunks(chunks: Uint8Array[]): Uint8Array[] {
         return chunks.map(chunk => this.encrypt(chunk));
     }
 
@@ -142,7 +164,7 @@ export default class SymmetricMorph {
      * @param chunks - An array of encrypted byte arrays.
      * @returns An array of decrypted plaintext byte arrays.
      */
-    decryptChunks(chunks: number[][]): number[][] {
+    decryptChunks(chunks: Uint8Array[]): Uint8Array[] {
         return chunks.map(chunk => this.decrypt(chunk));
     }
 
@@ -207,8 +229,8 @@ export default class SymmetricMorph {
      * @param seed - The seed array for the PRNG.
      * @returns A function that generates random bytes.
      */
-    private static createPrng(seed: number[]): () => number {
-        const state = new Array(64).fill(0).map((_, i) => seed[i % seed.length] ^ (i * 97) % 256);
+    private static createPrng(seed: Uint8Array | number[]): () => number {
+        const state = new Array(64).fill(0).map((_, i) => seed[i % seed.length] ^ ((i * 97) & 0xFF));
         let counter = 0;
         return () => {
             const i = counter % 64;
@@ -229,17 +251,17 @@ export default class SymmetricMorph {
      * @param length - The desired key length in bytes.
      * @returns The derived key as an array of bytes.
      */
-    private static deriveKey(pass: number[], salt: number[], rounds: number, length: number): number[] {
-        let data = [...pass, ...salt];
+    private static deriveKey(pass: Uint8Array | number[], salt: Uint8Array | number[], rounds: number, length: number): Uint8Array {
+        let data = Array.from(pass).concat(Array.from(salt));
         let state = 0;
         for (let i = 0; i < rounds; i++) {
             const next = data.map((b, j) => (b ^ (state + j * 7 + i)) % 256);
             state = (state + next.reduce((a, b) => a ^ b, 0)) % 256;
             data = next;
         }
-        const key: number[] = [];
+        const key = new Uint8Array(length);
         for (let i = 0; i < length; i++) {
-            key.push(data[i % data.length] ^ (i * 37 + state) % 256);
+            key[i] = data[i % data.length] ^ ((i * 37 + state) % 256);
         }
         return key;
     }
@@ -250,14 +272,14 @@ export default class SymmetricMorph {
      * @param key - The encryption key.
      * @returns The MAC as an array of bytes.
      */
-    private static mac(data: number[], key: number[]): number[] {
-        const result: number[] = [];
+    private static mac(data: Uint8Array, key: Uint8Array): Uint8Array {
+        const result = new Uint8Array(32);
         let acc = 137;
         for (let i = 0; i < 32; i++) {
             const d = data[i % data.length];
             const k = key[i % key.length];
             acc = (acc + d + k * (i + 1)) % 256;
-            result.push(acc ^ ((i * 11 + d) % 256));
+            result[i] = acc ^ ((i * 11 + d) % 256);
         }
         return result;
     }
@@ -268,10 +290,10 @@ export default class SymmetricMorph {
      * @param key - The encryption key.
      * @returns The generated MAC as an array of bytes.
      */
-    private static generateMac(macAcc: number, key: number[]): number[] {
-        const result: number[] = [];
+    private static generateMac(macAcc: number, key: Uint8Array): Uint8Array {
+        const result = new Uint8Array(32);
         for (let i = 0; i < 32; i++) {
-            result.push((macAcc ^ key[i % key.length] ^ (i * 19)) & 0xFF);
+            result[i] = (macAcc ^ key[i % key.length] ^ (i * 19)) & 0xFF;
         }
         return result;
     }
@@ -281,20 +303,20 @@ export default class SymmetricMorph {
      * @param length - The length of the salt in bytes.
      * @returns The generated salt as an array of bytes.
      */
-    private static generateSalt(length: number): number[] {
+    private static generateSalt(length: number): Uint8Array {
         const t = performance.now() | 0;
         const seed = [t & 0xff, (t >> 8) & 0xff, (t >> 16) & 0xff];
         const prng = this.createPrng(seed);
-        return Array.from({ length }, () => prng());
+        return Uint8Array.from({ length } as any, (_, i) => prng());
     }
 
     /**
      * Generates a random nonce for encryption.
      * @returns The generated nonce as an array of bytes.
      */
-    private static generateNonce(): number[] {
+    private static generateNonce(): Uint8Array {
         const t = Date.now();
-        return [
+        return Uint8Array.from([
             (t >> 0) & 0xff,
             (t >> 8) & 0xff,
             (t >> 16) & 0xff,
@@ -303,7 +325,7 @@ export default class SymmetricMorph {
             (t % 241),
             (t % 239),
             (t % 233),
-        ];
+        ]);
     }
 
     /**
@@ -321,7 +343,7 @@ export default class SymmetricMorph {
      * @param b - The second byte array.
      * @returns `true` if the arrays are equal, otherwise `false`.
      */
-    private static constantTimeCompare(a: number[], b: number[]): boolean {
+    private static constantTimeCompare(a: Uint8Array, b: Uint8Array): boolean {
         if (a.length !== b.length) return false;
         let result = 0;
         for (let i = 0; i < a.length; i++) {

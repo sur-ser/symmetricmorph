@@ -4,3 +4,5 @@ src/
 vite.config.ts
 *.log
 *.DS_Store
+/SymmetricMorph.docx
+/~$mmetricMorph.docx
