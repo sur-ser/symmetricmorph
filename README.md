@@ -1,4 +1,7 @@
 # SymmetricMorph
+![npm](https://img.shields.io/npm/v/symmetricmorph)
+![GitHub](https://img.shields.io/github/license/sur-ser/symmetricmorph)
+![GitHub issues](https://img.shields.io/github/issues/sur-ser/symmetricmorph)
 
 Unique symmetric stream cipher with dynamic masking, cascading feedback, chunked streaming support, and internal MAC.
 
