@@ -18,7 +18,9 @@
   "scripts": {
     "build": "tsc",
     "build:browser": "vite build",
-    "test": "vitest run"
+    "build:all": "npm run build && npm run build:browser",
+    "test": "vitest run",
+    "prepare": "npm run build:all"
   },
   "repository": {
     "type": "git",
