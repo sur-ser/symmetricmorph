@@ -1,26 +1,48 @@
 {
   "name": "symmetricmorph",
   "version": "1.0.0",
-  "description": "Unique symmetric stream cipher with dynamic masking, cascading feedback, and internal MAC.",
-  "main": "dist/SymmetricMorph.js",
-  "types": "dist/SymmetricMorph.d.ts",
+  "description": "High-performance symmetric stream cipher with dynamic masking, cascading feedback, built-in MAC, and chunked encryption support. Lightweight and dependency-free.",
+  "main": "./dist/symmetricmorph.cjs.js",
+  "module": "./dist/symmetricmorph.es.js",
+  "types": "./dist/symmetricmorph.d.ts",
+  "exports": {
+    "import": "./dist/symmetricmorph.es.js",
+    "require": "./dist/symmetricmorph.cjs.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "TESTING.md"
+  ],
   "scripts": {
     "build": "tsc",
     "build:browser": "vite build",
     "test": "vitest run"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sur-ser/symmetricmorph.git"
+  },
   "keywords": [
     "encryption",
-    "cipher",
-    "stream cipher",
     "crypto",
-    "security"
+    "stream-cipher",
+    "security",
+    "typescript",
+    "cipher",
+    "symmetric",
+    "stream-encryption",
+    "npm",
+    "browser",
+    "nodejs",
+    "lightweight",
+    "web-worker"
   ],
   "author": "Suren Krmoian",
   "license": "MIT",
-  "devDependencies": {
-    "typescript": "^5.x.x",
-    "vite": "^6.3.3",
-    "vitest": "^1.x.x"
-  }
+  "bugs": {
+    "url": "https://github.com/sur-ser/symmetricmorph/issues"
+  },
+  "homepage": "https://github.com/sur-ser/symmetricmorph#readme"
 }
