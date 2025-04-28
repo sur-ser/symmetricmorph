@@ -1,0 +1,26 @@
+{
+  "name": "symmetricmorph",
+  "version": "1.0.0",
+  "description": "Unique symmetric stream cipher with dynamic masking, cascading feedback, and internal MAC.",
+  "main": "dist/SymmetricMorph.js",
+  "types": "dist/SymmetricMorph.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "build:browser": "vite build",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "encryption",
+    "cipher",
+    "stream cipher",
+    "crypto",
+    "security"
+  ],
+  "author": "Suren Krmoian",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.x.x",
+    "vite": "^6.3.3",
+    "vitest": "^1.x.x"
+  }
+}

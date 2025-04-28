@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SymmetricMorph ESM Test</title>
+    <script type="module">
+      import SymmetricMorph from '../dist/symmetricmorph.es.js';
+
+      const cipher = SymmetricMorph.fromPassword('Secret123');
+      const plain = Array.from('Hi!').map(c => c.charCodeAt(0));
+      const encrypted = cipher.encrypt(plain);
+      const decrypted = cipher.decrypt(encrypted);
+      console.log(String.fromCharCode(...decrypted));
+    </script>
+
+</head>
+<body>
+<h1>SymmetricMorph ESM Demo</h1>
+</body>
+</html>

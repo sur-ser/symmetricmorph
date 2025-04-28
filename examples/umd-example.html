@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SymmetricMorph UMD Test</title>
+    <script src="../dist/symmetricmorph.umd.js"></script>
+    <script>
+      const cipher = SymmetricMorph.fromPassword('MyStrongPassword');
+      const plain = Array.from('Hello Browser!').map(c => c.charCodeAt(0));
+
+      const encrypted = cipher.encrypt(plain);
+      const decrypted = cipher.decrypt(encrypted);
+
+      console.log(String.fromCharCode(...decrypted)); // Hello Browser!
+    </script>
+
+</head>
+<body>
+<h1>SymmetricMorph UMD Demo</h1>
+</body>
+</html>
